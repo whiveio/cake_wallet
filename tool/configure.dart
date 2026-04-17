@@ -1732,6 +1732,7 @@ Future<void> generatePubspec({
   required bool hasBase,
   required bool hasArbitrum,
   required bool hasZcash,
+  required bool hasWhive,
 }) async {
   const cwCore = """
   cw_core:
