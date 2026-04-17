@@ -12,6 +12,7 @@ const decredOutputPath = 'lib/decred/decred.dart';
 const dogecoinOutputPath = 'lib/dogecoin/dogecoin.dart';
 const evmOutputPath = 'lib/evm/evm.dart';
 const zcashOutputPath = 'lib/zcash/zcash.dart';
+const whiveOutputPath = 'lib/whive/whive.dart';
 const walletTypesPath = 'lib/wallet_types.g.dart';
 const secureStoragePath = 'lib/core/secure_storage.dart';
 const pubspecDefaultPath = 'pubspec_default.yaml';
@@ -36,6 +37,7 @@ Future<void> main(List<String> args) async {
   final hasArbitrum = args.contains('${prefix}arbitrum');
   final hasZcash = args.contains('${prefix}zcash');
   final hasEVM = hasEthereum || hasPolygon || hasBase || hasArbitrum;
+  final hasWhive = args.contains('${prefix}whive');
   final excludeFlutterSecureStorage = args.contains('${prefix}excludeFlutterSecureStorage');
 
   await generateBitcoin(hasBitcoin);
@@ -51,6 +53,7 @@ Future<void> main(List<String> args) async {
   await generateDogecoin(hasDogecoin);
   await generateEVM(hasEVM);
   await generateZcash(hasZcash);
+  await generateWhive(hasWhive);
 
   await generatePubspec(
     hasMonero: hasMonero,
@@ -70,6 +73,7 @@ Future<void> main(List<String> args) async {
     hasBase: hasBase,
     hasArbitrum: hasArbitrum,
     hasZcash: hasZcash,
+    hasWhive: hasWhive,
   );
   await generateWalletTypes(
     hasMonero: hasMonero,
@@ -88,6 +92,7 @@ Future<void> main(List<String> args) async {
     hasBase: hasBase,
     hasArbitrum: hasArbitrum,
     hasZcash: hasZcash,
+    hasWhive: hasWhive,
   );
   await injectSecureStorage(!excludeFlutterSecureStorage);
 }
@@ -1657,6 +1662,58 @@ abstract class Zcash {
   await outputFile.writeAsString(output);
 }
 
+Future<void> generateWhive(bool hasImplementation) async {
+  final outputFile = File(whiveOutputPath);
+  const whiveCommonHeaders = """
+import 'package:cw_core/transaction_priority.dart';
+import 'package:cw_core/unspent_coins_info.dart';
+import 'package:cw_core/wallet_credentials.dart';
+import 'package:cw_core/wallet_info.dart';
+import 'package:cw_core/wallet_service.dart';
+import 'package:hive/hive.dart';
+""";
+  const whiveCWHeaders = """
+import 'package:cw_whive/cw_whive.dart';
+""";
+  const whiveCwPart = "part 'cw_whive.dart';";
+  const whiveContent = """
+abstract class Whive {
+
+  WalletService createWhiveWalletService(Box<UnspentCoinsInfo> unspentCoinSource, bool isDirect);
+
+  WalletCredentials createWhiveNewWalletCredentials(
+      {required String name, WalletInfo? walletInfo, String? password, String? passphrase, String? mnemonic});
+
+  WalletCredentials createWhiveRestoreWalletFromSeedCredentials(
+      {required String name, required String mnemonic, required String password, String? passphrase});
+
+  TransactionPriority deserializeWhiveTransactionPriority(int raw);
+
+  TransactionPriority getDefaultTransactionPriority();
+
+  List<TransactionPriority> getTransactionPriorities();
+
+  TransactionPriority getWhiveTransactionPrioritySlow();
+}
+""";
+
+  const whiveEmptyDefinition = 'Whive? whive;\n';
+  const whiveCWDefinition = 'Whive? whive = CWWhive();\n';
+
+  final output = '$whiveCommonHeaders\n' +
+      (hasImplementation ? '$whiveCWHeaders\n' : '\n') +
+      (hasImplementation ? '$whiveCwPart\n\n' : '\n') +
+      (hasImplementation ? whiveCWDefinition : whiveEmptyDefinition) +
+      '\n' +
+      whiveContent;
+
+  if (outputFile.existsSync()) {
+    await outputFile.delete();
+  }
+
+  await outputFile.writeAsString(output);
+}
+
 Future<void> generatePubspec({
   required bool hasMonero,
   required bool hasBitcoin,
@@ -1739,6 +1796,10 @@ Future<void> generatePubspec({
   cw_zcash:
       path: ./cw_zcash
   """;
+  const cwWhive = """
+  cw_whive:
+      path: ./cw_whive
+  """;
 
   final inputFile = File(pubspecOutputPath);
   final inputText = await inputFile.readAsString();
@@ -1806,6 +1867,10 @@ Future<void> generatePubspec({
     output += '\n$cwZcash';
   }
 
+  if (hasWhive) {
+    output += '\n$cwWhive';
+  }
+
   final outputLines = output.split('\n');
   inputLines.insertAll(dependenciesIndex + 1, outputLines);
   final outputContent = inputLines.join('\n');
@@ -1835,6 +1900,7 @@ Future<void> generateWalletTypes({
   required bool hasBase,
   required bool hasArbitrum,
   required bool hasZcash,
+  required bool hasWhive,
 }) async {
   final walletTypesFile = File(walletTypesPath);
 
@@ -1908,6 +1974,10 @@ Future<void> generateWalletTypes({
 
   if (hasBanano) {
     outputContent += '\tWalletType.banano,\n';
+  }
+
+  if (hasWhive) {
+    outputContent += '\tWalletType.whive,\n';
   }
 
   // if (hasWownero) {
