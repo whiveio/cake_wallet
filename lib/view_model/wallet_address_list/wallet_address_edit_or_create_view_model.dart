@@ -49,7 +49,8 @@ abstract class WalletAddressEditOrCreateViewModelBase with Store {
       _wallet.type == WalletType.bitcoin ||
       _wallet.type == WalletType.bitcoinCash ||
       _wallet.type == WalletType.litecoin ||
-      _wallet.type == WalletType.dogecoin;
+      _wallet.type == WalletType.dogecoin ||
+      _wallet.type == WalletType.whive;
 
   Future<void> save() async {
     try {

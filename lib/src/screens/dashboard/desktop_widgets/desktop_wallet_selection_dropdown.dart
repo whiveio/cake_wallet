@@ -195,6 +195,7 @@ class _DesktopWalletSelectionDropDownState extends State<DesktopWalletSelectionD
       case WalletType.zcash:
         return zcashIcon;
       case WalletType.none:
+      case WalletType.whive:
         return nonWalletTypeIcon;
     }
   }

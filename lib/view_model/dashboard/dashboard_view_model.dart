@@ -959,6 +959,7 @@ abstract class DashboardViewModelBase with Store {
       case WalletType.haven:
       case WalletType.zcash:
       case WalletType.none:
+      case WalletType.whive:
         return false;
     }
   }

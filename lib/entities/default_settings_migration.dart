@@ -50,6 +50,7 @@ const zanoDefaultNodeUri = '37.27.100.59:10500';
 const moneroWorldNodeUri = '.moneroworld.com';
 const decredDefaultUri = "default-spv-nodes";
 const dogecoinDefaultNodeUri = 'dogecoin.stackwallet.com:50022';
+const whiveDefaultNodeUri = 'electrumx2.cointest.com:50002';
 const baseDefaultNodeUri = 'base.nownodes.io';
 const arbitrumDefaultNodeUri = 'arbitrum.nownodes.io';
 const zcashDefaultNodeUri = 'zec-node.cakewallet.com:443';
@@ -682,6 +683,8 @@ String _getDefaultNodeUri(WalletType type) {
       return arbitrumDefaultNodeUri;
     case WalletType.zcash:
       return zcashDefaultNodeUri;
+    case WalletType.whive:
+      return whiveDefaultNodeUri;
     case WalletType.banano:
     case WalletType.none:
       return '';
@@ -1103,6 +1106,7 @@ Future<void> checkCurrentNodes(
   final currentWowneroNodeId = sharedPreferences.getInt(PreferencesKey.currentWowneroNodeIdKey);
   final currentZanoNodeId = sharedPreferences.getInt(PreferencesKey.currentZanoNodeIdKey);
   final currentZcashNodeId = sharedPreferences.getInt(PreferencesKey.currentZcashNodeIdKey);
+  final currentWhiveNodeId = sharedPreferences.getInt(PreferencesKey.currentWhiveNodeIdKey);
   final currentMoneroNode =
       nodeSource.values.firstWhereOrNull((node) => node.key == currentMoneroNodeId);
   final currentBitcoinElectrumServer =
@@ -1139,6 +1143,8 @@ Future<void> checkCurrentNodes(
       nodeSource.values.firstWhereOrNull((node) => node.key == currentZanoNodeId);
   final currentZcashNode =
       nodeSource.values.firstWhereOrNull((node) => node.key == currentZcashNodeId);
+  final currentWhiveNodeServer =
+      nodeSource.values.firstWhereOrNull((node) => node.key == currentWhiveNodeId);
 
   if (currentMoneroNode == null) {
     final newCakeWalletNode = Node(uri: newCakeWalletMoneroUri, type: WalletType.monero);
@@ -1258,6 +1264,12 @@ Future<void> checkCurrentNodes(
     final node = Node(uri: zcashDefaultNodeUri, type: WalletType.zcash, useSSL: true);
     await nodeSource.add(node);
     await sharedPreferences.setInt(PreferencesKey.currentZcashNodeIdKey, node.key as int);
+  }
+
+  if (currentWhiveNodeServer == null) {
+    final node = Node(uri: whiveDefaultNodeUri, type: WalletType.whive, useSSL: true);
+    await nodeSource.add(node);
+    await sharedPreferences.setInt(PreferencesKey.currentWhiveNodeIdKey, node.key as int);
   }
 }
 

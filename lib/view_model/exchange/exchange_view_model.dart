@@ -928,6 +928,10 @@ abstract class ExchangeViewModelBase extends WalletChangeListenerViewModel with 
         depositCurrency = CryptoCurrency.zec;
         receiveCurrency = CryptoCurrency.xmr;
         break;
+      case WalletType.whive:
+        depositCurrency = CryptoCurrency.whive;
+        receiveCurrency = CryptoCurrency.xmr;
+        break;
       case WalletType.none:
         break;
     }

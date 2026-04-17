@@ -59,6 +59,9 @@ Future<List<Node>> loadDefaultNodes(WalletType type) async {
     case WalletType.zcash:
       path = 'assets/zcash_node_list.yml';
       break;
+    case WalletType.whive:
+      path = 'assets/whive_electrum_server_list.yml';
+      break;
     case WalletType.banano:
     case WalletType.none:
       path = '';
@@ -113,6 +116,7 @@ Future<void> resetToDefault(Box<Node> nodeSource) async {
   final baseNodes = await loadDefaultNodes(WalletType.base);
   final arbitrumNodes = await loadDefaultNodes(WalletType.arbitrum);
   final zcashNodes = await loadDefaultNodes(WalletType.zcash);
+  final whiveElectrumServerList = await loadDefaultNodes(WalletType.whive);
 
   final nodes = moneroNodes +
       bitcoinElectrumServerList +
@@ -129,7 +133,8 @@ Future<void> resetToDefault(Box<Node> nodeSource) async {
       dogecoinElectrumServerList +
       baseNodes +
       arbitrumNodes +
-      zcashNodes;
+      zcashNodes +
+      whiveElectrumServerList;
 
   await nodeSource.clear();
   await nodeSource.addAll(nodes);

@@ -97,6 +97,10 @@ abstract class TransactionDetailsViewModelBase with Store {
         break;
       case WalletType.zcash:
         _addZcashListItems(tx, dateFormat);
+        break;
+      case WalletType.whive:
+        _addWhiveListItems(tx, dateFormat);
+        break;
       case WalletType.none:
       case WalletType.banano:
         break;
@@ -215,6 +219,8 @@ abstract class TransactionDetailsViewModelBase with Store {
         return 'https://blockchair.com/dogecoin/transaction/${txId}';
       case WalletType.zcash:
         return 'https://blockchair.com/zcash/transaction/${txId}';
+      case WalletType.whive:
+        return 'https://whiveexplorer2.cointest.com/tx/${txId}';
       case WalletType.none:
         return '';
     }
@@ -236,6 +242,8 @@ abstract class TransactionDetailsViewModelBase with Store {
       case WalletType.bitcoinCash:
       case WalletType.dogecoin:
         return S.current.view_transaction_on + 'Blockchair.com';
+      case WalletType.whive:
+        return S.current.view_transaction_on + 'whiveexplorer2.cointest.com';
       case WalletType.haven:
         return S.current.view_transaction_on + 'explorer.havenprotocol.org';
       case WalletType.ethereum:
@@ -812,6 +820,51 @@ abstract class TransactionDetailsViewModelBase with Store {
   }
 
   void _addDogecoinListItems(TransactionInfo tx, DateFormat dateFormat) {
+    final _items = [
+      StandartListItem(
+        title: S.current.transaction_details_transaction_id,
+        value: tx.txHash,
+        key: ValueKey('standard_list_item_transaction_details_id_key'),
+      ),
+      StandartListItem(
+        title: S.current.transaction_details_date,
+        value: dateFormat.format(tx.date),
+        key: ValueKey('standard_list_item_transaction_details_date_key'),
+      ),
+      StandartListItem(
+        title: S.current.transaction_details_height,
+        value: '${tx.height}',
+        key: ValueKey('standard_list_item_transaction_details_height_key'),
+      ),
+      StandartListItem(
+        title: S.current.transaction_details_amount,
+        value: tx.amountFormatted(),
+        key: ValueKey('standard_list_item_transaction_details_amount_key'),
+      ),
+      if (tx.feeFormatted()?.isNotEmpty ?? false)
+        StandartListItem(
+          title: S.current.transaction_details_fee,
+          value: tx.feeFormatted()!,
+          key: ValueKey('standard_list_item_transaction_details_fee_key'),
+        ),
+      if (showRecipientAddress && tx.to != null)
+        StandartListItem(
+          title: S.current.transaction_details_recipient_address,
+          value: tx.to!,
+          key: ValueKey('standard_list_item_transaction_details_recipient_address_key'),
+        ),
+      if (tx.from != null)
+        StandartListItem(
+          title: S.current.transaction_details_source_address,
+          value: tx.from!,
+          key: ValueKey('standard_list_item_transaction_details_source_address_key'),
+        ),
+    ];
+
+    items.addAll(_items);
+  }
+
+  void _addWhiveListItems(TransactionInfo tx, DateFormat dateFormat) {
     final _items = [
       StandartListItem(
         title: S.current.transaction_details_transaction_id,

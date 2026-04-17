@@ -46,6 +46,7 @@ String getQrImage(WalletType type, {int? selectedChainId}) {
     case WalletType.banano:
     case WalletType.haven:
     case WalletType.none:
+    case WalletType.whive:
     default:
       return 'assets/images/qr-cake.png';
   }

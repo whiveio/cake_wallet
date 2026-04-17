@@ -5,6 +5,7 @@ import 'package:cake_wallet/core/wallet_creation_service.dart';
 import 'package:cake_wallet/di.dart';
 import 'package:cake_wallet/dogecoin/dogecoin.dart';
 import 'package:cake_wallet/evm/evm.dart';
+import 'package:cake_wallet/whive/whive.dart';
 import 'package:cake_wallet/monero/monero.dart';
 import 'package:cake_wallet/nano/nano.dart';
 import 'package:cake_wallet/reactions/wallet_connect.dart';
@@ -62,6 +63,7 @@ abstract class WalletRestoreViewModelBase extends WalletCreationVM with Store {
       case WalletType.zano:
       case WalletType.zcash:
       case WalletType.dogecoin:
+      case WalletType.whive:
         availableModes = [WalletRestoreMode.seed];
         break;
       case WalletType.none:
@@ -220,6 +222,13 @@ abstract class WalletRestoreViewModelBase extends WalletCreationVM with Store {
             password: password,
             passphrase: passphrase,
             height: height,
+          );
+        case WalletType.whive:
+          return whive!.createWhiveRestoreWalletFromSeedCredentials(
+            name: name,
+            mnemonic: seed,
+            password: password,
+            passphrase: passphrase,
           );
         case WalletType.none:
         case WalletType.haven:

@@ -183,6 +183,7 @@ abstract class WalletKeysViewModelBase with Store {
       case WalletType.litecoin:
       case WalletType.bitcoinCash:
       case WalletType.dogecoin:
+      case WalletType.whive:
         if (_wallet.type == WalletType.bitcoin) {
           keys = bitcoin!.getSilentPaymentKeys(_appStore.wallet!);
         }
@@ -288,6 +289,8 @@ abstract class WalletKeysViewModelBase with Store {
         return 'dogecoin-wallet';
       case WalletType.zcash:
         return 'zcash-wallet';
+      case WalletType.whive:
+        return 'whive-wallet';
       default:
         throw Exception('Unexpected wallet type: ${_wallet.type.toString()}');
     }

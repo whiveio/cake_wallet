@@ -268,6 +268,21 @@ class ZcashURI extends PaymentURI {
   }
 }
 
+class WhiveURI extends PaymentURI {
+  WhiveURI({required super.amount, required super.address});
+
+  @override
+  String toString() {
+    var base = 'whive:$address';
+
+    if (amount.isNotEmpty) {
+      base += '?amount=${amount.replaceAll(',', '.')}';
+    }
+
+    return base;
+  }
+}
+
 class ERC681URI extends PaymentURI {
   final int chainId;
   final String? contractAddress;

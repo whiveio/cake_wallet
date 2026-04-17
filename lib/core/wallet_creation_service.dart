@@ -92,6 +92,7 @@ class WalletCreationService {
       case WalletType.banano:
       case WalletType.zano:
       case WalletType.decred:
+      case WalletType.whive:
         return false;
     }
   }

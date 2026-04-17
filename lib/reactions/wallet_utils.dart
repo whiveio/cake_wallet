@@ -22,6 +22,7 @@ bool isBIP39Wallet(WalletType walletType) {
     case WalletType.zano:
     case WalletType.decred:
     case WalletType.none:
+    case WalletType.whive:
       return false;
   }
 }

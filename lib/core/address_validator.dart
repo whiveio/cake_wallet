@@ -166,6 +166,8 @@ class AddressValidator extends TextValidator {
         pattern = r'([1-9A-HJ-NP-Za-km-z]{90,200})|(@[\w\d.-]+)';
       case CryptoCurrency.doge:
         pattern = r'^D[a-km-zA-HJ-NP-Z1-9]{25,34}';
+      case CryptoCurrency.whive:
+        pattern = r'^W[a-km-zA-HJ-NP-Z1-9]{25,34}|(wv1[ac-hj-np-z02-9]{25,60})';
       default:
         return '';
     }
@@ -281,6 +283,8 @@ class AddressValidator extends TextValidator {
       case CryptoCurrency.doge:
       case CryptoCurrency.firo:
         return [34];
+      case CryptoCurrency.whive:
+        return null; // Whive P2PKH addresses can vary in length (26-35 chars)
       case CryptoCurrency.hbar:
         return [4, 5, 6, 7, 8, 9, 10, 11];
       case CryptoCurrency.xvg:

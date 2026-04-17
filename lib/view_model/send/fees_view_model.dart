@@ -1,6 +1,7 @@
 import 'package:cake_wallet/bitcoin_cash/bitcoin_cash.dart';
 import 'package:cake_wallet/decred/decred.dart';
 import 'package:cake_wallet/dogecoin/dogecoin.dart';
+import 'package:cake_wallet/whive/whive.dart';
 import 'package:cake_wallet/entities/priority_for_wallet_type.dart';
 import 'package:cake_wallet/core/wallet_change_listener_view_model.dart';
 import 'package:cake_wallet/evm/evm.dart';
@@ -97,6 +98,8 @@ abstract class FeesViewModelBase extends WalletChangeListenerViewModel with Stor
         return transactionPriority == decred!.getDecredTransactionPrioritySlow();
       case WalletType.dogecoin:
         return transactionPriority == dogecoin!.getDogeCoinTransactionPrioritySlow();
+      case WalletType.whive:
+        return transactionPriority == whive!.getWhiveTransactionPrioritySlow();
       case WalletType.none:
       case WalletType.nano:
       case WalletType.banano:
@@ -130,7 +133,8 @@ abstract class FeesViewModelBase extends WalletChangeListenerViewModel with Stor
       wallet.type == WalletType.bitcoin ||
       wallet.type == WalletType.litecoin ||
       wallet.type == WalletType.bitcoinCash ||
-      wallet.type == WalletType.dogecoin;
+      wallet.type == WalletType.dogecoin ||
+      wallet.type == WalletType.whive;
 
   String? get walletCurrencyName => wallet.currency.fullName?.toLowerCase() ?? wallet.currency.name;
 
@@ -210,6 +214,9 @@ abstract class FeesViewModelBase extends WalletChangeListenerViewModel with Stor
         break;
       case WalletType.dogecoin:
         _settingsStore.setPriority(wallet.type, dogecoin!.getDefaultTransactionPriority());
+        break;
+      case WalletType.whive:
+        _settingsStore.setPriority(wallet.type, whive!.getDefaultTransactionPriority());
         break;
       default:
         break;

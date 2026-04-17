@@ -162,6 +162,8 @@ abstract class WalletAddressListViewModelBase extends WalletChangeListenerViewMo
         return DecredURI(amount: amount, address: address.address);
       case WalletType.dogecoin:
         return DogeURI(amount: amount, address: address.address);
+      case WalletType.whive:
+        return WhiveURI(amount: amount, address: address.address);
       case WalletType.base:
         return BaseURI(amount: amount, address: address.address);
       case WalletType.arbitrum:
@@ -421,6 +423,7 @@ abstract class WalletAddressListViewModelBase extends WalletChangeListenerViewMo
         WalletType.decred,
         WalletType.dogecoin,
         WalletType.zcash,
+        WalletType.whive,
       ].contains(wallet.type);
 
   @computed
@@ -428,7 +431,8 @@ abstract class WalletAddressListViewModelBase extends WalletChangeListenerViewMo
         WalletType.bitcoin,
         WalletType.litecoin,
         WalletType.bitcoinCash,
-        WalletType.dogecoin
+        WalletType.dogecoin,
+        WalletType.whive
       ].contains(wallet.type);
 
   List<String> getWalletImages(int? chainId) {
