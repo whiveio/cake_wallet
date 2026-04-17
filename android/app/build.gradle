@@ -78,19 +78,23 @@ android {
 
     signingConfigs {
        release {
-           keyAlias keystoreProperties['keyAlias']
-           keyPassword keystoreProperties['keyPassword']
-           storeFile file(keystoreProperties['storeFile'])
-           storePassword keystoreProperties['storePassword']
+           if (keystorePropertiesFile.exists()) {
+               keyAlias keystoreProperties['keyAlias']
+               keyPassword keystoreProperties['keyPassword']
+               storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+               storePassword keystoreProperties['storePassword']
+           }
        }
    }
    buildTypes {
        release {
-            signingConfig signingConfigs.release
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
        }
        debug {
-            signingConfig signingConfigs.release
+            // Use debug signing config for debug builds
        }
    }
 
