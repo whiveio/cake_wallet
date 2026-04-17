@@ -1,0 +1,8 @@
+-
+  uri: "electrumx1.cointest.com:50002"
+  is_default: true
+  useSSL: true
+-
+  uri: "electrumx2.cointest.com:50002"
+  is_default: false
+  useSSL: true
