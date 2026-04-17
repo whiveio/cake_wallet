@@ -26,7 +26,7 @@ abstract class NanoTransactionHistoryBase extends TransactionHistoryBase<NanoTra
 
   final WalletInfo walletInfo;
   final EncryptionFileUtils encryptionFileUtils;
-  String _password;
+  final String _password;
 
   Future<void> init() async {
     clear();

@@ -46,6 +46,7 @@ class CryptoBalanceWidget extends StatelessWidget {
       case HardwareWalletType.keystone:
         return "assets/images/hardware_wallet/device_qr.svg";
     }
+    return null;
   }
 
   @override

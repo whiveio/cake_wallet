@@ -14,7 +14,7 @@ class NostrProfileHandler {
     'relay.snort.social': 'snort.social',
   };
 
-  static Nip05 _nip05 = Nip05();
+  static final Nip05 _nip05 = Nip05();
 
   static Future<ProfilePointer?> queryProfile(BuildContext context, String nip05Address) async {
     var profile = await _nip05.queryProfile(nip05Address);

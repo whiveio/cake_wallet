@@ -17,7 +17,7 @@ abstract class NanoAccountListBase with Store {
 
   @observable
   ObservableList<NanoAccount> accounts;
-  bool _isRefreshing;
+  final bool _isRefreshing;
   bool _isUpdating;
 
   String address;
