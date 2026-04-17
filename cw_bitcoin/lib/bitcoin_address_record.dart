@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cw_bitcoin/electrum_derivations.dart';
 import 'package:cw_core/utils/print_verbose.dart';
 import 'package:mobx/mobx.dart';
+import 'package:blockchain_utils/blockchain_utils.dart';
 
 import 'package:bitcoin_base/bitcoin_base.dart';
 
@@ -103,9 +105,53 @@ class BitcoinAddressRecord extends BaseBitcoinAddressRecord {
     try {
       scriptHash = BitcoinAddressUtils.scriptHash(address, network: network);
     } catch (e) {
-      return '';
+      // Fallback for P2PKH addresses on networks with custom version bytes (like Whive)
+      try {
+        scriptHash = _computeP2PKHScriptHash(address, network);
+      } catch (e2) {
+        printV('Failed to compute script hash for $address: $e2');
+        return '';
+      }
     }
     return scriptHash!;
+  }
+
+  /// Manually compute script hash for P2PKH addresses
+  /// This is needed for networks with non-standard version bytes (e.g., Whive)
+  String? _computeP2PKHScriptHash(String address, BasedUtxoNetwork network) {
+    // Decode Base58Check address to get the pubkey hash
+    final decoded = Base58Decoder.checkDecode(address);
+    if (decoded.isEmpty) return null;
+
+    // The decoded data is: version_byte (1 byte) + pubkey_hash (20 bytes)
+    // Verify the version byte matches the network's P2PKH version
+    final versionByte = decoded[0];
+    if (network.p2pkhNetVer.isNotEmpty && versionByte != network.p2pkhNetVer[0]) {
+      return null;
+    }
+
+    // Extract the 20-byte pubkey hash
+    final pubkeyHash = decoded.sublist(1);
+    if (pubkeyHash.length != 20) return null;
+
+    // Build P2PKH script: OP_DUP OP_HASH160 <20 bytes> OP_EQUALVERIFY OP_CHECKSIG
+    // Hex: 76 a9 14 <pubkeyhash> 88 ac
+    final script = Uint8List(25);
+    script[0] = 0x76;  // OP_DUP
+    script[1] = 0xa9;  // OP_HASH160
+    script[2] = 0x14;  // Push 20 bytes
+    script.setRange(3, 23, pubkeyHash);
+    script[23] = 0x88; // OP_EQUALVERIFY
+    script[24] = 0xac; // OP_CHECKSIG
+
+    // SHA256 hash of the script
+    final hash = QuickCrypto.sha256Hash(script);
+
+    // Reverse bytes for little-endian (Electrum protocol requirement)
+    final reversed = Uint8List.fromList(hash.reversed.toList());
+
+    // Return hex string
+    return BytesUtils.toHexString(reversed);
   }
 
   @override

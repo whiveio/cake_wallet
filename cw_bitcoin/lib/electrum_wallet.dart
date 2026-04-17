@@ -55,6 +55,61 @@ import 'package:sp_scanner/sp_scanner.dart';
 
 part 'electrum_wallet.g.dart';
 
+/// Helper to parse address type, with fallback for addresses on networks
+/// with non-standard version bytes or HRPs (like Whive).
+BitcoinBaseAddress _safeAddressTypeFromStr(String address, BasedUtxoNetwork network) {
+  try {
+    return RegexUtils.addressTypeFromStr(address, network);
+  } catch (e) {
+    // Fallback for Bech32 addresses with custom HRP (like Whive's 'wv' prefix)
+    final hrp = network.p2wpkhHrp;
+    if (hrp.isNotEmpty && address.toLowerCase().startsWith(hrp)) {
+      try {
+        // Decode bech32 address manually
+        final bech32Data = SegwitBech32Decoder.decode(hrp, address.toLowerCase());
+        final witnessVersion = bech32Data.item1;
+        final witnessProgram = bech32Data.item2;
+
+        final programHex = BytesUtils.toHexString(witnessProgram);
+        if (witnessVersion == 0 && witnessProgram.length == 20) {
+          // P2WPKH - 20 byte witness program
+          return P2wpkhAddress.fromProgram(program: programHex);
+        } else if (witnessVersion == 0 && witnessProgram.length == 32) {
+          // P2WSH - 32 byte witness program
+          return P2wshAddress.fromProgram(program: programHex);
+        } else if (witnessVersion == 1 && witnessProgram.length == 32) {
+          // P2TR - taproot
+          return P2trAddress.fromProgram(program: programHex);
+        }
+      } catch (_) {}
+    }
+
+    // Fallback for P2PKH addresses on networks with custom version bytes (like Whive)
+    // Try to decode as Base58Check P2PKH
+    try {
+      final decoded = Base58Decoder.checkDecode(address);
+      if (decoded.isNotEmpty && decoded.length == 21) {
+        final versionByte = decoded[0];
+        // Check if it matches network's P2PKH version byte
+        if (network.p2pkhNetVer.isNotEmpty && versionByte == network.p2pkhNetVer[0]) {
+          final pubkeyHash = decoded.sublist(1);
+          // Build P2PKH script: OP_DUP OP_HASH160 <20 bytes> OP_EQUALVERIFY OP_CHECKSIG
+          final script = Script(script: [
+            'OP_DUP',
+            'OP_HASH160',
+            BytesUtils.toHexString(pubkeyHash),
+            'OP_EQUALVERIFY',
+            'OP_CHECKSIG',
+          ]);
+          return P2pkhAddress.fromScriptPubkey(script: script, network: BitcoinNetwork.mainnet);
+        }
+      }
+    } catch (_) {}
+    // Re-throw original error if fallback fails
+    rethrow;
+  }
+}
+
 class ElectrumWallet = ElectrumWalletBase with _$ElectrumWallet;
 
 abstract class ElectrumWalletBase
@@ -133,6 +188,7 @@ abstract class ElectrumWalletBase
         case CryptoCurrency.btc:
         case CryptoCurrency.ltc:
         case CryptoCurrency.tbtc:
+        case CryptoCurrency.whive:
           return Bip32Slip10Secp256k1.fromSeed(
                       seedBytes, getKeyNetVersion(network, hardwareWalletType))
                   .derivePath(
@@ -220,13 +276,27 @@ abstract class ElectrumWalletBase
       .toSet();
 
   List<String> get scriptHashes => walletAddresses.addressesByReceiveType
-      .where((addr) => RegexUtils.addressTypeFromStr(addr.address, network) is! MwebAddress)
+      .where((addr) {
+        try {
+          return RegexUtils.addressTypeFromStr(addr.address, network) is! MwebAddress;
+        } catch (e) {
+          // For P2PKH addresses (like Whive), parsing may fail - they're not MWEB
+          return true;
+        }
+      })
       .map((addr) => (addr as BitcoinAddressRecord).getScriptHash(network))
       .toList();
 
   List<String> get publicScriptHashes => walletAddresses.allAddresses
       .where((addr) => !addr.isHidden)
-      .where((addr) => RegexUtils.addressTypeFromStr(addr.address, network) is! MwebAddress)
+      .where((addr) {
+        try {
+          return RegexUtils.addressTypeFromStr(addr.address, network) is! MwebAddress;
+        } catch (e) {
+          // For P2PKH addresses (like Whive), parsing may fail - they're not MWEB
+          return true;
+        }
+      })
       .map((addr) => addr.getScriptHash(network))
       .toList();
 
@@ -747,7 +817,7 @@ abstract class ElectrumWalletBase
       allInputsAmount += utx.value;
       leftAmount = leftAmount - utx.value;
 
-      final address = RegexUtils.addressTypeFromStr(utx.address, network);
+      final address = _safeAddressTypeFromStr(utx.address, network);
       ECPrivate? privkey;
       bool? isSilentPayment = false;
 
@@ -986,7 +1056,7 @@ abstract class ElectrumWalletBase
       outputs: updatedOutputs,
       coinTypeToSpendFrom: coinTypeToSpendFrom,
     );
-    final address = RegexUtils.addressTypeFromStr(changeAddress.address, network);
+    final address = _safeAddressTypeFromStr(changeAddress.address, network);
     updatedOutputs.add(BitcoinOutput(
       address: address,
       value: BigInt.from(amountLeftForChangeAndFee),
@@ -1241,7 +1311,7 @@ abstract class ElectrumWalletBase
 
         credentialsAmount += outputAmount;
 
-        final address = RegexUtils.addressTypeFromStr(
+        final address = _safeAddressTypeFromStr(
             out.isParsedAddress ? out.extractedAddress! : out.address, network);
         final isSilentPayment = address is SilentPaymentAddress;
 
@@ -1886,7 +1956,7 @@ abstract class ElectrumWalletBase
 
         final addressRecord =
             walletAddresses.allAddresses.firstWhere((element) => element.address == address);
-        final btcAddress = RegexUtils.addressTypeFromStr(addressRecord.address, network);
+        final btcAddress = _safeAddressTypeFromStr(addressRecord.address, network);
         final privkey = generateECPrivate(
             hd: addressRecord.isHidden ? walletAddresses.sideHd : walletAddresses.mainHd,
             index: addressRecord.index,
@@ -1925,7 +1995,7 @@ abstract class ElectrumWalletBase
         }
 
         final address = addressFromOutputScript(out.scriptPubKey, network);
-        final btcAddress = RegexUtils.addressTypeFromStr(address, network);
+        final btcAddress = _safeAddressTypeFromStr(address, network);
         outputs.add(BitcoinOutput(address: btcAddress, value: BigInt.from(out.amount.toInt())));
       }
 
@@ -1970,7 +2040,7 @@ abstract class ElectrumWalletBase
             .toList();
 
         for (final utxo in unusedUtxos) {
-          final address = RegexUtils.addressTypeFromStr(utxo.address, network);
+          final address = _safeAddressTypeFromStr(utxo.address, network);
           final privkey = generateECPrivate(
             hd: utxo.bitcoinAddressRecord.isHidden
                 ? walletAddresses.sideHd
@@ -2003,7 +2073,7 @@ abstract class ElectrumWalletBase
             } else {
               final changeAddress = await walletAddresses.getChangeAddress();
               outputs.add(BitcoinOutput(
-                  address: RegexUtils.addressTypeFromStr(changeAddress.address, network),
+                  address: _safeAddressTypeFromStr(changeAddress.address, network),
                   value: BigInt.from(-remainingFee)));
             }
 
@@ -2470,7 +2540,15 @@ abstract class ElectrumWalletBase
   Future<ElectrumBalance> fetchBalances() async {
     final addresses = walletAddresses.allAddresses
         .where((address) => address.address.isNotEmpty)
-        .where((address) => RegexUtils.addressTypeFromStr(address.address, network) is! MwebAddress)
+        .where((address) {
+          try {
+            return RegexUtils.addressTypeFromStr(address.address, network) is! MwebAddress;
+          } catch (e) {
+            // For networks that don't support bech32/segwit (like Whive with P2PKH),
+            // the address parsing may fail. These addresses are not MWEB, so include them.
+            return true;
+          }
+        })
         .toList();
     final balanceFutures = <Future<Map<String, dynamic>>>[];
     for (var i = 0; i < addresses.length; i++) {
@@ -2620,7 +2698,7 @@ abstract class ElectrumWalletBase
 
     List<int> possibleRecoverIds = [0, 1];
 
-    final baseAddress = RegexUtils.addressTypeFromStr(address, network);
+    final baseAddress = _safeAddressTypeFromStr(address, network);
 
     for (int recoveryId in possibleRecoverIds) {
       final pubKey = sig.recoverPublicKey(messageHash, Curves.generatorSecp256k1, recoveryId);
