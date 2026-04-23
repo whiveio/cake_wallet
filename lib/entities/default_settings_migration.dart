@@ -1143,8 +1143,8 @@ Future<void> checkCurrentNodes(
       nodeSource.values.firstWhereOrNull((node) => node.key == currentZanoNodeId);
   final currentZcashNode =
       nodeSource.values.firstWhereOrNull((node) => node.key == currentZcashNodeId);
-  final currentWhiveNodeServer =
-      nodeSource.values.firstWhereOrNull((node) => node.key == currentWhiveNodeId);
+  final currentWhiveNodeServer = nodeSource.values.firstWhereOrNull(
+      (node) => node.key == currentWhiveNodeId && node.type == WalletType.whive);
 
   if (currentMoneroNode == null) {
     final newCakeWalletNode = Node(uri: newCakeWalletMoneroUri, type: WalletType.monero);
@@ -1267,8 +1267,13 @@ Future<void> checkCurrentNodes(
   }
 
   if (currentWhiveNodeServer == null) {
-    final node = Node(uri: whiveDefaultNodeUri, type: WalletType.whive, useSSL: true);
-    await nodeSource.add(node);
+    final existingWhiveNode =
+        nodeSource.values.firstWhereOrNull((e) => e.type == WalletType.whive);
+    final node = existingWhiveNode ??
+        Node(uri: whiveDefaultNodeUri, type: WalletType.whive, useSSL: true);
+    if (existingWhiveNode == null) {
+      await nodeSource.add(node);
+    }
     await sharedPreferences.setInt(PreferencesKey.currentWhiveNodeIdKey, node.key as int);
   }
 }

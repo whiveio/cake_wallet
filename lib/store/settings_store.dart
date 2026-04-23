@@ -1246,8 +1246,11 @@ abstract class SettingsStoreBase with Store {
         nodeSource.values.firstWhereOrNull((e) => e.uriRaw == zcashDefaultNodeUri);
     final dogecoinNode = nodeSource.get(dogecoinNodeId) ??
         nodeSource.values.firstWhereOrNull((e) => e.uriRaw == dogecoinDefaultNodeUri);
-    final whiveNode = nodeSource.get(whiveNodeId) ??
-        nodeSource.values.firstWhereOrNull((e) => e.uriRaw == whiveDefaultNodeUri);
+    var whiveNode = nodeSource.get(whiveNodeId);
+    if (whiveNode?.type != WalletType.whive) {
+      whiveNode = nodeSource.values.firstWhereOrNull((e) => e.type == WalletType.whive) ??
+          nodeSource.values.firstWhereOrNull((e) => e.uriRaw == whiveDefaultNodeUri);
+    }
 
     final packageInfo = await PackageInfo.fromPlatform();
     final deviceName = await _getDeviceName() ?? '';
