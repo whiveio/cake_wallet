@@ -20,12 +20,12 @@ MONERO_COM_BUNDLE_ID="com.monero.app"
 MONERO_COM_PACKAGE="com.monero.app"
 MONERO_COM_SCHEME="monero.com"
 
-CAKEWALLET_NAME="Whive Wallet"
+CAKEWALLET_NAME="Cake Wallet"
 CAKEWALLET_VERSION="5.8.0-whive.2"
 CAKEWALLET_BUILD_NUMBER=4301
 CAKEWALLET_BUNDLE_ID="com.whive.cake_wallet"
 CAKEWALLET_PACKAGE="com.whive.cake_wallet"
-CAKEWALLET_SCHEME="whivewallet"
+CAKEWALLET_SCHEME="cakewallet"
 
 
 if ! [[ " ${TYPES[*]} " =~ " ${APP_ANDROID_TYPE} " ]]; then
